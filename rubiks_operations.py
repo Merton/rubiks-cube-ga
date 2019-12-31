@@ -1,4 +1,5 @@
 import numpy as np
+import random
 import matplotlib.pyplot as plt
 import matplotlib
 from mpl_toolkits.mplot3d import Axes3D
@@ -25,58 +26,14 @@ class Cube:
                           'L': [('U', 90),  ('F', 90),  ('D', 90),  ('B', 270)],
                           'D': [('L', 180), ('B', 180), ('R', 180), ('F', 180)],
                           }
-        self.is_solved = True
 
-    def _get_face(self, face):
-        index = self.faces[face]
-        return self.state[:, index:index + 3]
+    def perform_moves(self, moves):
+        for move in moves:
+            self.__getattribute__(move)()
 
-    def _set_face(self, face, states):
-        index = self.faces[face]
-        self.state[:, index:index + 3] = states
-
-    def _rotate(self, face, degs=90, reverse=False):
-        if reverse:
-            degs = 360 - degs
-        k_vals = {0: 0, 90: 3, 180: 2, 270: 1, 360: 0}
-        index = self.faces[face]
-        states = self._get_face(face)
-        self.state[:, index:index + 3] = np.rot90(states, k=k_vals[degs])
-
-    def _rotate_states(self, states, degs=90):
-        k_vals = {0: 0, 90: 3, 180: 2, 270: 1, 360: 0}
-        return np.rot90(states, k=k_vals[degs])
-
-    def _rotate_adj_faces(self, cur_face, reverse=False):
-        adj_faces = self.adj_faces[cur_face].copy()
-        if reverse:
-            adj_faces.reverse()
-
-        f_0 = np.copy(self._get_face(adj_faces[0][0]))
-        i = 0
-        for face, rot_amount in adj_faces:
-            f = np.copy(self._get_face(face))
-            if i + 1 < len(adj_faces):
-                next_face, next_rot_amount = adj_faces[i + 1]
-                f_new = self._get_face(next_face)
-                f_new = self._rotate_states(f_new, degs=next_rot_amount)
-            else:
-                if reverse:
-                    f_new = self._rotate_states(f_0, degs=adj_faces[0][1])
-                else:
-                    f_new = self._rotate_states(f_0, degs=adj_faces[0][1])
-
-            # Copy top row
-            if reverse:
-                f = np.copy(self._rotate_states(f, degs=rot_amount))
-            else:
-                f = np.copy(self._rotate_states(f, degs=rot_amount))
-
-            f[0, :] = f_new[0, :]
-            f = np.copy(self._rotate_states(f, degs=360 - rot_amount))
-
-            self._set_face(face, f)
-            i += 1
+    def shuffle(self):
+        moves = rand_moves(100)
+        self.perform_moves(moves)
 
     def op(self, move, reverse=False):
         self._rotate(move, reverse=reverse)
@@ -118,8 +75,56 @@ class Cube:
     def L_(self):
         self.op('L', reverse=True)
 
+    def verify(self):
+        for n in range(1, 7):
+            if np.count_nonzero(self.state == n) != 9:
+                raise ValueError("The cube has an incorrect number of pieces, found {} {}'s instead of 9".format(np.count_nonzero(self.state == n),n))
+
     def get_color_rep(self):
         return np.vectorize(self.color_dict.get)(self.state)
+
+    def _get_face(self, face):
+        index = self.faces[face]
+        return self.state[:, index:index + 3]
+
+    def _set_face(self, face, states):
+        index = self.faces[face]
+        self.state[:, index:index + 3] = states
+
+    def _rotate(self, face, degs=90, reverse=False):
+        if reverse:
+            degs = 360 - degs
+        k_vals = {0: 0, 90: 3, 180: 2, 270: 1, 360: 0}
+        index = self.faces[face]
+        states = self._get_face(face)
+        self.state[:, index:index + 3] = np.rot90(states, k=k_vals[degs])
+
+    def _rotate_states(self, states, degs=90):
+        k_vals = {0: 0, 90: 3, 180: 2, 270: 1, 360: 0}
+        return np.rot90(states, k=k_vals[degs])
+
+    def _rotate_adj_faces(self, cur_face, reverse=False):
+        adj_faces = self.adj_faces[cur_face].copy()
+        if reverse:
+            adj_faces.reverse()
+
+        f_0 = np.copy(self._get_face(adj_faces[0][0]))
+        i = 0
+        for face, rot_amount in adj_faces:
+            f = np.copy(self._get_face(face))
+            if i + 1 < len(adj_faces):
+                next_face, next_rot_amount = adj_faces[i + 1]
+                f_new = self._get_face(next_face)
+                f_new = self._rotate_states(f_new, degs=next_rot_amount)
+            else:
+                f_new = self._rotate_states(f_0, degs=adj_faces[0][1])
+
+            f = np.copy(self._rotate_states(f, degs=rot_amount))
+            f[0, :] = f_new[0, :]
+            f = np.copy(self._rotate_states(f, degs=360 - rot_amount))
+
+            self._set_face(face, f)
+            i += 1
 
     def __repr__(self):
         return f"Cube({str(self.state)})"
@@ -130,6 +135,27 @@ class Cube:
 
     def __call__(self):
         return self.state
+
+
+def rand_moves(N):
+    poss_moves = ['U', 'F', 'R', 'B', 'L', 'D', 'U_', 'F_', 'R_', 'B_', 'L_', 'D_']
+    moves = []
+
+    n = 0
+    while len(moves) < N:
+        move_index = random.randint(0, len(poss_moves) - 1)
+        move = poss_moves[move_index]
+        prev = moves[n-1] if n > 0 else ''
+
+        if prev != move + '_' and prev + '_' != move:
+            moves.append(move)
+            n += 1
+
+    return moves
+
+
+cube = Cube()
+print(cube)
 
 
 def display_cube(cube):
@@ -160,23 +186,17 @@ def display_cube(cube):
 
     plt.show()
 
+# cube.R_()
+# cube.D_()
+# cube.R()
+# cube.D()
+# cube.R_()
+# cube.D_()
+# cube.R()
+# cube.D()
+# cube.U()
+# cube.U()
 
-cube = Cube()
-
-for i in range(0, 6):
-    cube.R()
-    cube.U()
-    cube.R_()
-    cube.U_()
-
-for i in range(0, 6):
-    cube.L_()
-    cube.U_()
-    cube.L()
-    cube.U()
-
-
-print(cube)
-
-
-# print(cube)
+# [1, 1, 1, 4, 4, 5, 1, 5, 5, 2, 2, 2, 3, 3, 3, 6, 6, 3],
+# [1, 1, 1, 2, 2, 6, 4, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 2],
+# [1, 1, 4, 2, 2, 6, 2, 3, 4, 6, 3, 5, 6, 5, 5, 4, 6, 3]
