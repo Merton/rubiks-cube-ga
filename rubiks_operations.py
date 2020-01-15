@@ -20,6 +20,7 @@ class Cube:
                 # [1, 1, 4, 2, 2, 6, 2, 3, 4, 6, 3, 5, 6, 5, 5, 4, 6, 3]
             ]
         )
+        self.solved = True
         self.color_dict = {1: 'y', 2: 'b', 3: 'r', 4: 'g', 5: 'orange', 6: 'w'}
         self.faces = {'U': 0, 'F': 3, 'R': 6, 'B': 9, 'L': 12, 'D': 15}
         self.adj_faces = {'U': [('F', 0), ('R', 0), ('B', 0), ('L', 0)],
@@ -29,22 +30,45 @@ class Cube:
                           'L': [('U', 90), ('F', 90), ('D', 90), ('B', 270)],
                           'D': [('L', 180), ('B', 180), ('R', 180), ('F', 180)],
                           }
+        self.fitness()
 
     def fitness(self):
         score = [np.sum(self.state[:, face:face + 3] == index + 1) for index, face in enumerate(self.faces.values())]
+        fit_val = np.sum(score) - 6
+        if fit_val == 48:
+            self.solved = True
+        else:
+            self.solved = False
         return np.sum(score) - 6
 
     def perform_moves(self, moves):
+        max_fitness = 0
         for move in moves:
-            self.__getattribute__(move)()
+            self.perform_move(move)
+            cur_fitness = self.fitness()
+            if cur_fitness > max_fitness:
+                max_fitness = cur_fitness
+            if cur_fitness == 48:
+                self.solved = True
+                break
 
-    def shuffle(self):
-        moves = rand_moves(100)
+        return self.solved, cur_fitness, max_fitness
+
+    def perform_move(self, move):
+        self.__getattribute__(move)()
+
+    def shuffle(self, rigor=100):
+        moves = rand_moves(rigor)
         self.perform_moves(moves)
+        if self.fitness() == 48:
+            self.shuffle()
+        self.solved = False
+        print(f"Shuffled with {rigor} moves:\n{moves}")
 
     def op(self, move, reverse=False):
         self._rotate(move, reverse=reverse)
         self._rotate_adj_faces(move, reverse)
+        self.fitness()
 
     def U(self):
         self.op('U', reverse=False)
