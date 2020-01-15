@@ -44,17 +44,16 @@ def fitness(genotype):
     :param genotype: The genes to be measured
     :return: The fitness value (+/-)
     """
-    current_state = starting_cube.state
-    for move in genotype:
-        starting_cube.perform_moves([move])
+    current_state = deepcopy(starting_cube.state)
+    starting_cube.perform_moves(genotype)
 
-    fitness = starting_cube.fitness()
+    fit = starting_cube.fitness()
     starting_cube.state = current_state
 
-    return fitness
+    return fit
 
 
-def tournament(pop, fit):
+def tournament(pop):
     """
     Select two contestants at random and determine
     the highest fitness of them. The loser gets replaced by the winner.
@@ -66,17 +65,15 @@ def tournament(pop, fit):
     g1 = pop[g1_i]
     g2 = pop[g2_i]
 
-    if fit[g1_i] >= fit[g2_i]:
+    if fitness(g1) >= fitness(g2):
         pop[g2_i] = g1
-        fit[g2_i] = fitness(g1)
     else:
         pop[g1_i] = g2
-        fit[g1_i] = fitness(g2)
 
     return pop
 
 
-def microbial_co(pop, fit):
+def microbial_co(pop):
     """
     Implements microbial crossover. Selects two random genotypes and determines greatest fitness.
     The loser with some chance Pc, gets crossed over bit by bit with the winner. Each bit mutates with
@@ -90,9 +87,11 @@ def microbial_co(pop, fit):
     g2 = pop[g2_i]
 
     Pc = crossover_rate
-    Pm = mutation_rate / 2
+    Pm = mutation_rate
 
-    if fit[g1_i] >= fit[g2_i]:
+    g1_fit = fitness(g1)
+    g2_fit = fitness(g2)
+    if g1_fit >= g2_fit:
         winner = g1
         loser = g2
         loser_i = g2_i
@@ -112,8 +111,7 @@ def microbial_co(pop, fit):
             loser[i] = rand_move(prev)
 
     pop[loser_i] = loser
-    fit[loser_i] = fitness(loser)
-    return pop, fit
+    return pop
 
 
 def ga(config):
@@ -123,10 +121,7 @@ def ga(config):
     :param config: The configuration settings for the GA
     :return: The updated config for the GA
     """
-    print("\n\tCalculating fitness")
-    pop_fitness = np.apply_along_axis(fitness, 1, config['population'])
-    config['fitness'] = pop_fitness
-
+    print("\n")
     if config['has_mutation']:
         print("\tApplying mutation")
         config['population'] = np.apply_along_axis(mutate, 1, config['population'])
@@ -139,22 +134,27 @@ def ga(config):
     if config['has_microbial_co']:
         print("\tApplying microbial crossover")
         for _ in range(population_size):
-            config['population'], config['fitness'] = microbial_co(config['population'], config['fitness'])
+            config['population'] = microbial_co(config['population'])
 
-    f_min = np.amin(pop_fitness)
-    f_max = np.amax(pop_fitness)
-    f_avg = np.sum(pop_fitness) / population_size
+    print("\tCalculating fitness")
+    pop_fitness = [fitness(genotype) for genotype in config['population']]
+    config['fitness'] = pop_fitness
+
+    f_min = np.amin(config['fitness'])
+    f_max = np.amax(config['fitness'])
+    f_avg = np.sum(config['fitness']) / population_size
+
     config['f_min'].append(f_min)
     config['f_max'].append(f_max)
     config['f_avg'].append(f_avg)
 
+
     print("\tIntroducing new population with best performers")
     top_thres = 0.4
     pop_split = int(population_size*top_thres), int(population_size*(1-top_thres))
-    best_performers_indexes = np.argpartition(pop_fitness, -pop_split[0])[-pop_split[0]:]
-    fitness_vals = pop_fitness[best_performers_indexes]
-    best_performers = config['population'][best_performers_indexes]
 
+    best_performers_indexes = np.argpartition(pop_fitness, -pop_split[0])[-pop_split[0]:]
+    best_performers = config['population'][best_performers_indexes]
     new_pop = np.array([rand_moves(num_moves) for _ in range(pop_split[1])])
 
     config['population'] = np.concatenate((best_performers, new_pop))
@@ -169,16 +169,18 @@ def run_gas(num_generations):
     :param num_generations: The number of generations to run
     :return:
     """
+    config = ga_types['Microbial']
+    initial_pop = deepcopy(config['population'])
+
     for i in range(num_generations):
         sys.stdout.write("\rRunning gen {0} of {1}".format(i+1, generations))
         sys.stdout.flush()
 
         for ga_type, config, in ga_types.items():
-            config = ga(config)
+            ga(config)
             ga_types[ga_type] = config
 
-            fitness = config['fitness']
-            best_fitness = np.amax(fitness)
+            best_fitness = np.amax(config['fitness'])
             best_fitness_index = np.where(config['fitness'] == best_fitness)
             print("Best moves: ", config['population'][best_fitness_index][0])
             print("Best fitness: ", best_fitness)

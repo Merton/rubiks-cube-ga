@@ -2,7 +2,7 @@ import numpy as np
 from rubiks_operations import Cube, rand_moves
 
 # === Global GA Config === #
-generations = 1000
+generations = 100
 population_size = 100
 mutation_rate = 0.2
 crossover_rate = 0.8
@@ -30,7 +30,7 @@ The f_min, f_max and f_avg can be accessed after the ga has been ran to view res
 """
 ga_types = {
     'Microbial': {
-        'has_mutation': True,
+        'has_mutation': False,
         'has_tournament': False,
         'has_microbial_co': True,
         'population': starting_moveset,
