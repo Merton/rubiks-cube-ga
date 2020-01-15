@@ -1,9 +1,9 @@
 import sys
 from random import random, randint
 import matplotlib.pyplot as plt
-
+from copy import deepcopy
 from ga_config import *
-from matrix_helpers import flip_bit
+from rubiks_operations import rand_move
 
 
 # To configure the different starting values and GAs features, use the ga_config.py file.
@@ -29,7 +29,10 @@ def mutate(genotype):
     """
     if random() > 1 - mutation_rate:
         mutation_index = randint(0, len(genotype) - 1)
-        genotype[mutation_index] = 1 if genotype[mutation_index] < 0 else -1
+        prev = ''
+        if mutation_index > 0:
+            prev = genotype[mutation_index-1]
+        genotype[mutation_index] = rand_move(prev)
 
     return genotype
 
@@ -41,7 +44,14 @@ def fitness(genotype):
     :param genotype: The genes to be measured
     :return: The fitness value (+/-)
     """
-    return np.sum(np.multiply(relationships, np.outer(genotype, genotype.transpose())))
+    current_state = starting_cube.state
+    for move in genotype:
+        starting_cube.perform_moves([move])
+
+    fitness = starting_cube.fitness()
+    starting_cube.state = current_state
+
+    return fitness
 
 
 def tournament(pop):
@@ -64,7 +74,7 @@ def tournament(pop):
     return pop
 
 
-def microbial_co(pop):
+def microbial_co(pop, fit):
     """
     Implements microbial crossover. Selects two random genotypes and determines greatest fitness.
     The loser with some chance Pc, gets crossed over bit by bit with the winner. Each bit mutates with
@@ -77,10 +87,10 @@ def microbial_co(pop):
     g1 = pop[g1_i]
     g2 = pop[g2_i]
 
-    Pc = 0.85
-    Pm = 0.05
+    Pc = crossover_rate
+    Pm = mutation_rate / 2
 
-    if fitness(g1) >= fitness(g2):
+    if fit[g1_i] >= fit[g2_i]:
         winner = g1
         loser = g2
         loser_i = g2_i
@@ -93,10 +103,15 @@ def microbial_co(pop):
         if random() > 1 - Pc:
             loser[i] = winner[i]
         if random() > 1 - Pm:
-            loser[i] = flip_bit(loser[i])
+            prev = ''
+            if i > 0:
+                prev = loser[i-1]
+
+            loser[i] = rand_move(prev)
 
     pop[loser_i] = loser
-    return pop
+    fit[loser_i] = fitness(loser)
+    return pop, fit
 
 
 def ga(config):
@@ -106,23 +121,43 @@ def ga(config):
     :param config: The configuration settings for the GA
     :return: The updated config for the GA
     """
+    print("\n\tCalculating fitness")
     pop_fitness = np.apply_along_axis(fitness, 1, config['population'])
+    config['fitness'] = pop_fitness
 
     if config['has_mutation']:
+        print("\tApplying mutation")
         config['population'] = np.apply_along_axis(mutate, 1, config['population'])
 
-    if config['has_tournament']:
-        # Apply tournament selections
-        for _ in range(population_size):
-            config['population'] = tournament(config['population'])
+    # if config['has_tournament']:
+    #     print("\tApplying tournament selection")
+    #     for _ in range(population_size):
+    #         config['population'] = tournament(config['population'])
 
     if config['has_microbial_co']:
+        print("\tApplying microbial crossover")
         for _ in range(population_size):
-            config['population'] = microbial_co(config['population'])
+            config['population'], config['fitness'] = microbial_co(config['population'], config['fitness'])
 
-    config['f_min'].append(min(pop_fitness))
-    config['f_max'].append(max(pop_fitness))
-    config['f_avg'].append(sum(pop_fitness) / population_size)
+    f_min = np.amin(pop_fitness)
+    f_max = np.amax(pop_fitness)
+    f_avg = np.sum(pop_fitness) / population_size
+    config['f_min'].append(f_min)
+    config['f_max'].append(f_max)
+    config['f_avg'].append(f_avg)
+
+    print("\tIntroducing new population with best performers")
+    top_thres = 0.4
+    pop_split = int(population_size*top_thres), int(population_size*(1-top_thres))
+    best_performers_indexes = np.argpartition(pop_fitness, -pop_split[0])[-pop_split[0]:]
+    fitness_vals = pop_fitness[best_performers_indexes]
+    best_performers = config['population'][best_performers_indexes]
+
+    new_pop = np.array([rand_moves(num_moves) for _ in range(pop_split[1])])
+
+    config['population'] = np.concatenate((best_performers, new_pop))
+    config['fitness'] = pop_fitness
+
     return config
 
 
@@ -137,9 +172,17 @@ def run_gas(num_generations):
         sys.stdout.flush()
 
         for ga_type, config, in ga_types.items():
-            ga_types[ga_type] = ga(config)
+            config = ga(config)
+            ga_types[ga_type] = config
 
-    print(f'\nTheoretical best: {(num_friends ** 2) - num_friends}')
+            fitness = config['fitness']
+            best_fitness = np.amax(fitness)
+            best_fitness_index = np.where(config['fitness'] == best_fitness)
+            print("Best moves: ", config['population'][best_fitness_index][0])
+            print("Best fitness: ", best_fitness)
+            print("\n")
+    print(f'\nMax (solved) fitness: 48')
+    print()
 
 
 def plot_gas():

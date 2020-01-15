@@ -1,19 +1,22 @@
-from matrix_helpers import random_matrix
 import numpy as np
+from rubiks_operations import Cube, rand_moves
 
 # === Global GA Config === #
-generations = 100
+generations = 1000
 population_size = 100
-num_friends   = 20
-mutation_rate = 0.05
-
-demes_size = population_size / 5
-
-# Get the relationship matrix
-relationships = random_matrix(num_friends, num_friends, True, sym=True)
+mutation_rate = 0.2
+crossover_rate = 0.8
+num_moves = 50
+demes_size = population_size
 
 # Create the starting population
-starting_population = random_matrix(population_size, num_friends)
+starting_cube = Cube()
+print("Shuffling cube")
+starting_cube.shuffle()
+print("Cube:")
+print(starting_cube)
+
+starting_moveset = np.array([rand_moves(num_moves) for n in range(population_size)])
 
 
 """
@@ -26,75 +29,15 @@ mutation, tournament selection and microbial crossover.
 The f_min, f_max and f_avg can be accessed after the ga has been ran to view results and plot.
 """
 ga_types = {
-    'Mutation Only': {
+    'Microbial': {
         'has_mutation': True,
         'has_tournament': False,
-        'has_microbial_co': False,
-        'population': starting_population.copy(),
+        'has_microbial_co': True,
+        'population': starting_moveset,
+        'fitness': [],
         'f_min': [],
         'f_max': [],
         'f_avg': [],
         'plot_color': 'b-'
     },
-    # 'Tournament Only': {
-    #     'has_mutation': False,
-    #     'has_tournament': True,
-    #     'has_microbial_co': False,
-    #     'population': starting_population.copy(),
-    #     'f_min': [],
-    #     'f_max': [],
-    #     'f_avg': [],
-    #     'plot_color': 'r-'
-    # },
-    'Microbial Only': {
-        'has_mutation': False,
-        'has_tournament': False,
-        'has_microbial_co': True,
-        'population': starting_population.copy(),
-        'f_min': [],
-        'f_max': [],
-        'f_avg': [],
-        'plot_color': 'k-'
-    },
-    'Mutation + Tournament': {
-        'has_mutation': True,
-        'has_tournament': True,
-        'has_microbial_co': False,
-        'population': starting_population.copy(),
-        'f_min': [],
-        'f_max': [],
-        'f_avg': [],
-        'plot_color': 'y-'
-    },
-    'Mutation + Microbial CO': {
-        'has_mutation': True,
-        'has_tournament': False,
-        'has_microbial_co': True,
-        'population': starting_population.copy(),
-        'f_min': [],
-        'f_max': [],
-        'f_avg': [],
-        'plot_color': 'm-'
-    },
-    'Microbial + Tournament': {
-        'has_mutation': False,
-        'has_tournament': True,
-        'has_microbial_co': True,
-        'population': starting_population.copy(),
-        'f_min': [],
-        'f_max': [],
-        'f_avg': [],
-        'plot_color': 'c-'
-    },
-    # Uncomment to enable all features GA
-    # 'All Features': {
-    #     'has_mutation': True,
-    #     'has_tournament': True,
-    #     'has_microbial_co': True,
-    #     'population': starting_population.copy(),
-    #     'f_min': [],
-    #     'f_max': [],
-    #     'f_avg': [],
-    #     'plot_color': 'r-'
-    # },
 }
