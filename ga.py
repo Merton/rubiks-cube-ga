@@ -54,7 +54,7 @@ def fitness(genotype):
     return fitness
 
 
-def tournament(pop):
+def tournament(pop, fit):
     """
     Select two contestants at random and determine
     the highest fitness of them. The loser gets replaced by the winner.
@@ -66,10 +66,12 @@ def tournament(pop):
     g1 = pop[g1_i]
     g2 = pop[g2_i]
 
-    if fitness(g1) >= fitness(g2):
+    if fit[g1_i] >= fit[g2_i]:
         pop[g2_i] = g1
+        fit[g2_i] = fitness(g1)
     else:
         pop[g1_i] = g2
+        fit[g1_i] = fitness(g2)
 
     return pop
 
@@ -129,10 +131,10 @@ def ga(config):
         print("\tApplying mutation")
         config['population'] = np.apply_along_axis(mutate, 1, config['population'])
 
-    # if config['has_tournament']:
-    #     print("\tApplying tournament selection")
-    #     for _ in range(population_size):
-    #         config['population'] = tournament(config['population'])
+    if config['has_tournament']:
+        print("\tApplying tournament selection")
+        for _ in range(population_size):
+            config['population'] = tournament(config['population'])
 
     if config['has_microbial_co']:
         print("\tApplying microbial crossover")
