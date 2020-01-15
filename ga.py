@@ -150,15 +150,15 @@ def ga(config):
 
 
     print("\tIntroducing new population with best performers")
-    top_thres = top_percent_thres
-    pop_split = int(population_size*top_thres), int(population_size*(1-top_thres))
+    best_split, new_split = int(population_size*top_percent_thres), int(population_size*(1-top_percent_thres))
 
-    best_performers_indexes = np.argpartition(pop_fitness, -pop_split[0])[-pop_split[0]:]
-    best_performers = config['population'][best_performers_indexes]
-    new_pop = np.array([rand_moves(num_moves) for _ in range(pop_split[1])])
+    pop_fit_arr = sorted(zip(config['population'], pop_fitness), key=lambda x: x[1], reverse=True)
+
+    best_performers = [n[0] for n in pop_fit_arr][:best_split]
+    new_pop = np.array([rand_moves(num_moves) for _ in range(new_split)])
 
     config['population'] = np.concatenate((best_performers, new_pop))
-    config['fitness'] = pop_fitness
+    config['fitness'] = [fitness(genotype) for genotype in config['population']]
 
     return config
 
