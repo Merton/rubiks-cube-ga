@@ -150,7 +150,7 @@ def ga(config):
 
 
     print("\tIntroducing new population with best performers")
-    top_thres = 0.4
+    top_thres = top_percent_thres
     pop_split = int(population_size*top_thres), int(population_size*(1-top_thres))
 
     best_performers_indexes = np.argpartition(pop_fitness, -pop_split[0])[-pop_split[0]:]

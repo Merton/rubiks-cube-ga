@@ -2,11 +2,12 @@ import numpy as np
 from rubiks_operations import Cube, rand_moves
 
 # === Global GA Config === #
-generations = 100
+generations = 1000
 population_size = 100
 mutation_rate = 0.2
 crossover_rate = 0.8
 num_moves = 50
+top_percent_thres = 0.1
 demes_size = population_size
 
 # Create the starting population
