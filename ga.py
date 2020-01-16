@@ -82,7 +82,7 @@ def microbial_co(pop):
     """
 
     Pc = crossover_rate
-    Pm = mutation_rate
+    Pm = 0.05
 
     # Get random  genotype indexes from population, fetch population
     g1_i,   g2_i   = random_pop_selection()
@@ -110,7 +110,6 @@ def microbial_co(pop):
 
     if fitness(loser) > loser_fitness:
         pop[loser_i] = loser
-    # else:
 
     return pop
 
@@ -133,7 +132,7 @@ def ga(config):
 
     if config['has_microbial_co']:
         # print("\tApplying microbial crossover")
-        for _ in range(population_size):
+        for _ in range(population_size // 2):
             config['population'] = microbial_co(config['population'])
 
     # print("\tCalculating fitness")
@@ -198,13 +197,13 @@ def run_gas():
             print(cube_state)
             # sys.stdout.write("\r{}".format(cube_state))
         i += 1
-
-    plt.plot([gen for gen in range(i)], gen_avgs, 'r-', label="Average fitness")
-    plt.show()
-
+    #
+    # # plt.plot([gen for gen in range(i)], gen_avgs, 'r-', label="Average fitness")
+    # plt.show()
 
     print(f'\nMax (solved) fitness: 48')
     return i
+
 
 def plot_gas(i):
     """
@@ -214,7 +213,7 @@ def plot_gas(i):
     :return:
     """
     xs = range(i+1)
-    print_results()
+    print_results(i)
 
     for type, values in ga_types.items():
         plt.plot(xs, values['f_max'], values['plot_color'], label=type+" Max")
@@ -225,17 +224,16 @@ def plot_gas(i):
     plt.show()
 
 
-def print_results():
+def print_results(i):
     for ga_name, config in ga_types.items():
         print(
             f'{ga_name: <25}: '
             f'best: {max(config["f_max"]): <3}, '
             f'worst: {min(config["f_min"]): <3}, '
-            f'avg: {sum(config["f_avg"]) // generations: <4}'
+            f'avg: {sum(config["f_avg"]) // i: <4}'
         )
 
 
 if __name__ == '__main__':
     gens_ran = run_gas()
-    plt.plot()
-    # plot_gas(gens_ran)
+    plot_gas(gens_ran)

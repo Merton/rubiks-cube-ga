@@ -45,6 +45,7 @@ class Cube:
 
     def perform_moves(self, moves):
         max_fitness = 0
+        cur_fitness = self.fitness()
         for move in moves:
             self.perform_move(move)
             cur_fitness = self.fitness()

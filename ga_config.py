@@ -2,12 +2,13 @@ import numpy as np
 from rubiks_operations import Cube, rand_moves
 
 # === Global GA Config === #
-max_generations = 100
+max_generations = 500
 population_size = 100
 mutation_rate = 0.2
-crossover_rate = 0.85
+crossover_rate = 0.6
 num_moves = 50
-demes_size = population_size
+demes_size = population_size // 4
+
 elitism = True
 top_percent_thres = 0.1 # Keep top, bring new pop in
 
