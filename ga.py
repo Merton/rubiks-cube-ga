@@ -47,6 +47,7 @@ def fitness(genotype):
     """
     current_state = deepcopy(starting_cube.state)
     is_solved, new_fitness, max_fitness = starting_cube.perform_moves(genotype)
+    starting_cube.move_state_dict["-".join(genotype)] = str(starting_cube)
     starting_cube.state = current_state
     if is_solved:
         cube_solved = True
@@ -109,8 +110,8 @@ def microbial_co(pop):
 
             loser[i] = rand_move(prev)
 
-    if fitness(loser) > loser_fitness:
-        pop[loser_i] = loser
+    # if fitness(loser) > loser_fitness:
+    pop[loser_i] = loser
     # else:
 
     return pop
@@ -170,6 +171,7 @@ def run_gas():
     """
     cube_solved = False
     i = 0
+    gen_avgs = []
     while not cube_solved:
         if i == max_generations:
             break
@@ -187,11 +189,18 @@ def run_gas():
 
             xs = [i for _ in range(population_size)]
             plt.scatter(xs, config['fitness'])
-            plt.plot(i, current_avg, label="Average fitness")
+            gen_avgs.append(current_avg)
 
-            sys.stdout.write("\rRunning gen {0} of {1} // Current Best: {2} // Current Avg: {3} // Moveset: {4}".format(i + 1, max_generations,best_fitness, current_avg, best_moves))
-            sys.stdout.flush()
+            print("""Running gen {0} of {1} // Current Best: {2} // Current Avg: {3}
+            Moveset:         {4}
+            Reverse shuffle: {5}"""
+                  .format(i + 1, max_generations, best_fitness, current_avg, best_moves, starting_cube.reverse_shuffle))
+            cube_state = starting_cube.move_state_dict.get("-".join(best_moves), [])
+            print(cube_state)
+            # sys.stdout.write("\r{}".format(cube_state))
         i += 1
+
+    plt.plot([gen for gen in range(i)], gen_avgs, 'r-', label="Average fitness")
     plt.show()
 
 

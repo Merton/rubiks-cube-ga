@@ -31,6 +31,8 @@ class Cube:
                           'D': [('L', 180), ('B', 180), ('R', 180), ('F', 180)],
                           }
         self.fitness()
+        self.move_state_dict = {}
+        self.reverse_shuffle = []
 
     def fitness(self):
         score = [np.sum(self.state[:, face:face + 3] == index + 1) for index, face in enumerate(self.faces.values())]
@@ -63,8 +65,14 @@ class Cube:
         if self.fitness() == 48:
             self.shuffle()
         self.solved = False
-        print(f"Shuffled with {rigor} moves:\n{moves}")
+        self.reverse_shuffle = self.reverse_moves(moves)
+        print(f"Shuffled with {rigor} moves: {moves}")
+        print(f"Reverse shuffle: {self.reverse_shuffle}")
 
+    def reverse_moves(self, moves):
+        moves = moves[::-1]
+        moves = [m[:-1] if m.endswith('_') else m + "_" for m in moves]
+        return moves
     def op(self, move, reverse=False):
         self._rotate(move, reverse=reverse)
         self._rotate_adj_faces(move, reverse)
@@ -168,8 +176,18 @@ class Cube:
         return f"Cube({str(self.state)})"
 
     def __str__(self):
-        return f"""{self._get_face('U')}, \n\n{self._get_face('F')}, \n\n{self._get_face('R')},  \n\n{self._get_face('B')}, \n\n{self._get_face('L')}, \n\n{self._get_face('D')}
+        u = self._get_face('U')
+        f = self._get_face('F')
+        r = self._get_face('R')
+        b = self._get_face('B')
+        l = self._get_face('L')
+        d = self._get_face('D')
+        rep = f"""
+        {u[0,:]} {f[0,:]} {r[0,:]} {b[0,:]} {l[0,:]} {d[0,:]}
+        {u[1,:]} {f[1,:]} {r[1,:]} {b[1,:]} {l[1,:]} {d[1,:]}
+        {u[2,:]} {f[2,:]} {r[2,:]} {b[2,:]} {l[2,:]} {d[2,:]}  
         """
+        return rep
 
     def __call__(self):
         return self.state
