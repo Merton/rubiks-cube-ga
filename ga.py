@@ -5,7 +5,6 @@ from copy import deepcopy
 from ga_config import *
 from rubiks_operations import rand_move
 
-
 # To configure the different starting values and GAs features, use the ga_config.py file.
 def random_pop_selection():
     """
@@ -13,7 +12,6 @@ def random_pop_selection():
     :param demes_size: The deme size for selecting the population within a cyclic loop
     :return: The two selected indexes of the population
     """
-
     g1_i = randint(0, population_size - 1)
     if demes_size > 0:
         g2_i = (g1_i + 1 + randint(0, demes_size)) % population_size
@@ -50,7 +48,7 @@ def fitness(genotype):
     starting_cube.move_state_dict["-".join(genotype)] = str(starting_cube)
     starting_cube.state = current_state
     if is_solved:
-        cube_solved = True
+        print("Solved")
     return max_fitness
 
 
@@ -110,8 +108,8 @@ def microbial_co(pop):
 
             loser[i] = rand_move(prev)
 
-    # if fitness(loser) > loser_fitness:
-    pop[loser_i] = loser
+    if fitness(loser) > loser_fitness:
+        pop[loser_i] = loser
     # else:
 
     return pop
@@ -151,14 +149,15 @@ def ga(config):
     config['f_avg'].append(f_avg)
     # print("Avg fitness: ", f_avg)
     # print("\tIntroducing new population with best performers")
-    best_split, new_split = int(population_size*top_percent_thres), population_size - int(population_size*(top_percent_thres))
-    pop_fit_arr = sorted(zip(config['population'], pop_fitness), key=lambda x: x[1], reverse=True)
+    if elitism:
+        best_split, new_split = int(population_size*top_percent_thres), population_size - int(population_size*(top_percent_thres))
+        pop_fit_arr = sorted(zip(config['population'], pop_fitness), key=lambda x: x[1], reverse=True)
 
-    best_performers = [n[0] for n in pop_fit_arr][:best_split]
-    new_pop = np.array([rand_moves(num_moves) for _ in range(new_split)])
+        best_performers = [n[0] for n in pop_fit_arr][:best_split]
+        new_pop = np.array([rand_moves(num_moves) for _ in range(new_split)])
 
-    config['population'] = np.concatenate((best_performers, new_pop))
-    config['fitness'] = [fitness(genotype) for genotype in config['population']]
+        config['population'] = np.concatenate((best_performers, new_pop))
+        config['fitness'] = [fitness(genotype) for genotype in config['population']]
 
     return config
 

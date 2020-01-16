@@ -51,6 +51,7 @@ class Cube:
             if cur_fitness > max_fitness:
                 max_fitness = cur_fitness
             if cur_fitness == 48:
+                print("Solved")
                 self.solved = True
                 break
 
@@ -73,6 +74,7 @@ class Cube:
         moves = moves[::-1]
         moves = [m[:-1] if m.endswith('_') else m + "_" for m in moves]
         return moves
+
     def op(self, move, reverse=False):
         self._rotate(move, reverse=reverse)
         self._rotate_adj_faces(move, reverse)
