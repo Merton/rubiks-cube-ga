@@ -2,20 +2,22 @@ import numpy as np
 from rubiks_operations import Cube, rand_moves
 
 # === Global GA Config === #
-max_generations = 500
-population_size = 100
-mutation_rate = 0.2
+max_generations = 5000
+population_size = 500
+mutation_rate = 0.6
 crossover_rate = 0.6
-num_moves = 50
-demes_size = population_size // 4
+num_moves = 22
+demes_size = 20
+# demes_size = -1
 
-elitism = True
-top_percent_thres = 0.1 # Keep top, bring new pop in
+elitism = False
+top_percent_thres = 0.95  # Keep top, bring new pop in
 
 # Create the starting population
 starting_cube = Cube()
 starting_cube.shuffle(rigor=20)
-
+# starting_cube.L()
+# starting_cube.U()
 # print("Shuffling cube")
 # starting_cube.shuffle()
 print("Cube:")
@@ -34,9 +36,10 @@ The f_min, f_max and f_avg can be accessed after the ga has been ran to view res
 """
 ga_types = {
     'Microbial': {
-        'has_mutation': True,
+        'has_mutation': False,
         'has_tournament': False,
         'has_microbial_co': True,
+        'has_k_co': False,
         'population': starting_moveset,
         'fitness': [0],
         'f_min': [0],

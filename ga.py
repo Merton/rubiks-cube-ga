@@ -3,7 +3,8 @@ from random import random, randint
 import matplotlib.pyplot as plt
 from copy import deepcopy
 from ga_config import *
-from rubiks_operations import rand_move
+from rubiks_operations import rand_move, reverse_moves
+
 
 # To configure the different starting values and GAs features, use the ga_config.py file.
 def random_pop_selection():
@@ -43,13 +44,10 @@ def fitness(genotype):
     :param genotype: The genes to be measured
     :return: The fitness value
     """
-    current_state = deepcopy(starting_cube.state)
-    is_solved, new_fitness, max_fitness = starting_cube.perform_moves(genotype)
-    starting_cube.move_state_dict["-".join(genotype)] = str(starting_cube)
+    current_state = np.array(starting_cube.state)
+    fit = starting_cube.perform_moves(genotype)
     starting_cube.state = current_state
-    if is_solved:
-        print("Solved")
-    return max_fitness
+    return fit
 
 
 def tournament(pop):
@@ -82,7 +80,7 @@ def microbial_co(pop):
     """
 
     Pc = crossover_rate
-    Pm = 0.05
+    Pm = mutation_rate  # mutation_rate
 
     # Get random  genotype indexes from population, fetch population
     g1_i,   g2_i   = random_pop_selection()
@@ -114,6 +112,29 @@ def microbial_co(pop):
     return pop
 
 
+def k_crossover(pop):
+    k = 10
+    # Get random  genotype indexes from population, fetch population
+    g1_i, g2_i = random_pop_selection()
+    g1, g2 = pop[g1_i], pop[g2_i]
+    g1_fit, g2_fit = fitness(g1), fitness(g2)
+    start = randint(0, k)
+    if g1_fit > g2_fit:
+        for i in range(start, len(g1), k*2):
+            if random() > 1 - crossover_rate:
+                g2[i:i+k] = g1[i:i+k]
+
+        pop[g2_i] = g2
+    else:
+        for i in range(start, len(g2), k * 2):
+            if random() > 1 - crossover_rate:
+                g1[i:i + k] = g2[i:i + k]
+
+        pop[g1_i] = g1
+
+    return pop
+
+
 def ga(config):
     """
     Calculates the fitness of the population, then applies the relevant GA features
@@ -134,6 +155,11 @@ def ga(config):
         # print("\tApplying microbial crossover")
         for _ in range(population_size // 2):
             config['population'] = microbial_co(config['population'])
+
+    if config['has_k_co']:
+        # print("\tApplying microbial crossover")
+        for _ in range(population_size // 2):
+            config['population'] = k_crossover(config['population'])
 
     # print("\tCalculating fitness")
     pop_fitness = [fitness(genotype) for genotype in config['population']]
@@ -182,26 +208,30 @@ def run_gas():
             best_fitness_index = np.where(config['fitness'] == best_fitness)
             best_moves = config['population'][best_fitness_index][0]
             current_avg = np.mean(config['fitness'])
-            if best_fitness == 48:
-                cube_solved = True
 
             xs = [i for _ in range(population_size)]
             plt.scatter(xs, config['fitness'])
             gen_avgs.append(current_avg)
 
             print("""Running gen {0} of {1} // Current Best: {2} // Current Avg: {3}
-            Moveset:         {4}
-            Reverse shuffle: {5}"""
-                  .format(i + 1, max_generations, best_fitness, current_avg, best_moves, starting_cube.reverse_shuffle))
-            cube_state = starting_cube.move_state_dict.get("-".join(best_moves), [])
+\tBest Moveset:
+\t{4}
+\tReverse shuffle:
+\t{5}
+\tOriginal Shuffle:
+\t{6}
+"""
+                  .format(i + 1, max_generations, best_fitness, current_avg, best_moves,
+                          starting_cube.reverse_shuffle, starting_cube.initial_shuffle))
+            fit, cube_state = starting_cube.move_cache.get("".join(best_moves), (False, False))
             print(cube_state)
-            # sys.stdout.write("\r{}".format(cube_state))
-        i += 1
-    #
-    # # plt.plot([gen for gen in range(i)], gen_avgs, 'r-', label="Average fitness")
-    # plt.show()
+            print(fit)
 
-    print(f'\nMax (solved) fitness: 48')
+            if best_fitness == 48:
+                cube_solved = True
+                print("Cube solved")
+                print(config['population'][best_fitness_index])
+        i += 1
     return i
 
 
