@@ -193,46 +193,66 @@ def run_gas():
     :param num_generations: The number of generations to run
     :return:
     """
-    cube_solved = False
-    i = 0
-    gen_avgs = []
-    while not cube_solved:
-        if i == max_generations:
-            break
+    runs = 20
+    gen_avgs = np.zeros((runs, max_generations))
+    gen_max = np.zeros((runs, max_generations))
+    max_gens_reached = 0
+    for run in range(runs):
+        cube_solved = False
+        i = 0
+        ga_types['Microbial']['fitness'] = []
+        ga_types['Microbial']['population'] = np.array([rand_moves(num_moves) for n in range(population_size)])
+        ga_types['Microbial']['f_min'] = []
+        ga_types['Microbial']['f_max'] = []
+        ga_types['Microbial']['f_avg'] = []
+        while not cube_solved:
+            if i == max_generations:
+                break
 
-        for ga_type, config, in ga_types.items():
-            ga(config)
-            ga_types[ga_type] = config
+            for ga_type, config, in ga_types.items():
+                ga(config)
+                ga_types[ga_type] = config
 
-            best_fitness = np.amax(config['fitness'])
-            best_fitness_index = np.where(config['fitness'] == best_fitness)
-            best_moves = config['population'][best_fitness_index][0]
-            current_avg = np.mean(config['fitness'])
+                best_fitness = np.amax(config['fitness'])
+                best_fitness_index = np.where(config['fitness'] == best_fitness)
+                best_moves = config['population'][best_fitness_index][0]
+                current_avg = np.mean(config['fitness'])
 
-            xs = [i for _ in range(population_size)]
-            plt.scatter(xs, config['fitness'])
-            gen_avgs.append(current_avg)
+                xs = [i for _ in range(population_size)]
+                # plt.scatter(xs, config['fitness'])
+                gen_avgs[run, i] = current_avg
+                gen_max[run, i] = best_fitness
+                print("""Running gen {0} of {1} // Current Best: {2} // Current Avg: {3}
+    \tBest Moveset:
+    \t{4}
+    \tReverse shuffle:
+    \t{5}
+    \tOriginal Shuffle:
+    \t{6}
+    """
+                      .format(i + 1, max_generations, best_fitness, current_avg, best_moves,
+                              starting_cube.reverse_shuffle, starting_cube.initial_shuffle))
+                fit, cube_state = starting_cube.move_cache.get("".join(best_moves), (False, False))
+                print(cube_state)
+                print(fit)
 
-            print("""Running gen {0} of {1} // Current Best: {2} // Current Avg: {3}
-\tBest Moveset:
-\t{4}
-\tReverse shuffle:
-\t{5}
-\tOriginal Shuffle:
-\t{6}
-"""
-                  .format(i + 1, max_generations, best_fitness, current_avg, best_moves,
-                          starting_cube.reverse_shuffle, starting_cube.initial_shuffle))
-            fit, cube_state = starting_cube.move_cache.get("".join(best_moves), (False, False))
-            print(cube_state)
-            print(fit)
+                if best_fitness == 48:
+                    cube_solved = True
+                    print("Cube solved")
+                    print(config['population'][best_fitness_index])
+            i += 1
+            if i > max_gens_reached:
+                max_gens_reached = i
 
-            if best_fitness == 48:
-                cube_solved = True
-                print("Cube solved")
-                print(config['population'][best_fitness_index])
-        i += 1
-    return i
+    xs = [g for g in range(max_gens_reached)]
+
+    plt.plot(xs, np.mean(gen_avgs, axis=0)[:max_gens_reached], label="Average")
+    plt.plot(xs, np.mean(gen_max, axis=0)[:max_gens_reached], label="Max")
+    plt.legend()
+    plt.xlabel('Generations')
+    plt.ylabel('Fitness')
+    plt.show()
+    # return i
 
 
 def plot_gas(i):
@@ -266,4 +286,4 @@ def print_results(i):
 
 if __name__ == '__main__':
     gens_ran = run_gas()
-    plot_gas(gens_ran)
+    # plot_gas(gens_ran)

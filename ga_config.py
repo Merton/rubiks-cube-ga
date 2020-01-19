@@ -2,24 +2,21 @@ import numpy as np
 from rubiks_operations import Cube, rand_moves
 
 # === Global GA Config === #
-max_generations = 5000
-population_size = 500
-mutation_rate = 0.6
-crossover_rate = 0.6
-num_moves = 22
+max_generations = 200
+population_size = 100
+mutation_rate = 0.2
+crossover_rate = 0.8
+num_moves = 50
 demes_size = 20
 # demes_size = -1
 
 elitism = False
-top_percent_thres = 0.95  # Keep top, bring new pop in
+top_percent_thres = 0.1  # Keep top, bring new pop in
 
 # Create the starting population
 starting_cube = Cube()
-starting_cube.shuffle(rigor=20)
-# starting_cube.L()
-# starting_cube.U()
-# print("Shuffling cube")
-# starting_cube.shuffle()
+starting_cube.shuffle(rigor=5)
+
 print("Cube:")
 print(starting_cube)
 

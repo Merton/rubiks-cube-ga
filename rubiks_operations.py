@@ -35,6 +35,15 @@ class Cube:
         self.reverse_shuffle = []
         self.initial_shuffle = []
 
+    def reset(self):
+        self.state =  np.array(
+            [
+                [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6],
+                [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6],
+                [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6]
+            ]
+        )
+
     def fitness(self):
         # score = [np.sum(self.state[:, face:face + 3] == index + 1) for index, face in enumerate(self.faces.values())]
         score = 0
@@ -53,22 +62,31 @@ class Cube:
 
     def perform_moves(self, moves):
         max_fitness = 0
+
+        # Check if moves have already been performed
         cached_fitness, cached_state = self.move_cache.get("".join(moves), (False, False))
         # cached_fitness = False
         if cached_fitness:
+            # If pre-calculated fitness exists, set state and return fitness
             self.state = cached_state
             return cached_fitness
+        else:
+            # Ensure rubiks cube state is in the shuffled state
+            self.state = np.copy(self.move_cache['shuffle'])
         acc_moves = ""
 
         for move in moves:
             acc_moves += move
 
+            # Check if moves so far exist in cache
             cached_fitness, cached_state = self.move_cache.get(acc_moves, (False, False))
             # cached_fitness = False
             if cached_fitness:
+                # If these moves have been performed, fetch from dictionary
                 cur_fitness = cached_fitness
                 self.state = np.copy(cached_state)
             else:
+                # Perform moves, calc fitness
                 self.perform_move(move)
                 cur_fitness = self.fitness()
                 if cur_fitness > max_fitness:
@@ -80,6 +98,7 @@ class Cube:
             if cur_fitness == 48:
                 print("Solved with:")
                 print(acc_moves)
+                print(self)
                 max_fitness = 48
                 self.solved = True
                 break
@@ -92,10 +111,11 @@ class Cube:
     def shuffle(self, rigor=100):
         moves = rand_moves(rigor)
         self.initial_shuffle = moves
-        self.perform_moves(moves)
+        for move in moves:
+            self.perform_move(move)
         if self.fitness() == 48:
             self.shuffle()
-        self.move_cache = {}
+        self.move_cache = {"shuffle": np.copy(self.state)}
         self.solved = False
         self.reverse_shuffle = reverse_moves(moves)
         print(f"Shuffled with {rigor} moves: {moves}")
@@ -104,7 +124,7 @@ class Cube:
     def op(self, move, reverse=False):
         self._rotate(move, reverse=reverse)
         self._rotate_adj_faces(move, reverse)
-        self.fitness()
+        # self.fitness()
 
     def U(self):
         self.op('U', reverse=False)
@@ -137,100 +157,40 @@ class Cube:
         self.op('R', reverse=True)
 
     def L(self):
-        self.op('L', reverse=False)
+        self.op('L', reverse=True)
 
     def L_(self):
-        self.op('L', reverse=True)
+        self.op('L', reverse=False)
 
     def M(self):
         # Rotates the layer between L and R
-        # F = self._get_face('F')
-        # U = self._get_face('U')
-        # B = self._get_face('B')
-        # D = self._get_face('D')
-        #
-        # temp = np.array(F[:, 1])
-        # F[:, 1] = U[:, 1]
-        # U[:, 1] = B[:, 1]
-        # B[:, 1] = D[:, 1]
-        # D[:, 1] = temp
         self.R()
         self.L_()
 
     def M_(self):
         # # Rotates the layer between L and R
-        # F = self._get_face('F')
-        # U = self._get_face('U')
-        # B = self._get_face('B')
-        # D = self._get_face('D')
-        #
-        # temp = np.array(F[:, 1])
-        # F[:, 1] = D[:, 1]
-        # D[:, 1] = B[:, 1]
-        # B[:, 1] = U[:, 1]
-        # U[:, 1] = temp
         self.R_()
         self.L()
 
     def E(self):
         # Rotates the layer between U and D
-        # F = self._get_face('F')
-        # R = self._get_face('R')
-        # B = self._get_face('B')
-        # L = self._get_face('L')
-        #
-        # temp = np.array(F[1, :])
-        # F[1, :] = L[1, :]
-        # L[1, :] = B[1, :]
-        # B[1, :] = R[1, :]
-        # R[1, :] = temp
-        self.U_()
-        self.D()
-
-    def E_(self):
-        # Rotates the layer between U and D
-        # F = self._get_face('F')
-        # R = self._get_face('R')
-        # B = self._get_face('B')
-        # L = self._get_face('L')
-        #
-        # temp = np.array(F[1, :])
-        # F[1, :] = R[1, :]
-        # R[1, :] = B[1, :]
-        # B[1, :] = L[1, :]
-        # L[1, :] = temp
         self.U()
         self.D_()
 
+    def E_(self):
+        # Rotates the layer between U and D
+        self.U_()
+        self.D()
+
     def S(self):
         # Rotates the layer between F and B
-        # U = self._get_face('U')
-        # R = self._get_face('R')
-        # D = self._get_face('D')
-        # L = self._get_face('L')
-        #
-        # temp = np.array(U[1, :])
-        # U[1, :] = L[:, 1]
-        # L[:, 1] = D[1, :]
-        # D[1, :] = R[:, 1]
-        # R[:, 1] = temp
-        self.L_()
-        self.R()
+        self.F_()
+        self.B()
 
     def S_(self):
         # Rotates the layer between F and B
-        # U = self._get_face('U')
-        # R = self._get_face('R')
-        # D = self._get_face('D')
-        # L = self._get_face('L')
-        #
-        # temp = np.array(U[1, :])
-        # U[1, :] = R[:, 1]
-        # R[:, 1] = D[1, :]
-        # D[1, :] = L[:, 1]
-        # L[:, 1] = temp
-        self.L()
-        self.R_()
+        self.F()
+        self.B_()
 
     def verify(self):
         for n in range(1, 7):
@@ -326,11 +286,11 @@ def rand_moves(N):
     return moves
 
 
-def rand_move(prev=""):
+def rand_move(prev="", next=""):
     move_index = random.randint(0, len(moveset) - 1)
     move = moveset[move_index]
 
-    while not (prev != move + '_' and prev + '_' != move):
+    while not (prev != move + '_' and prev + '_' != move) and (next != move + '_' and next + '_' != move):
         move_index = random.randint(0, len(moveset) - 1)
         move = moveset[move_index]
 
