@@ -98,6 +98,9 @@ class Cube:
             if cur_fitness == 48:
                 print("Solved with:")
                 print(acc_moves)
+                filename = "".join(self.initial_shuffle) + "=solutions.txt"
+                with open(filename, 'a+') as solves:
+                    solves.write(acc_moves+'\n')
                 print(self)
                 max_fitness = 48
                 self.solved = True
@@ -272,7 +275,6 @@ class Cube:
 
 
 moveset = ['U', 'F', 'R', 'B', 'L', 'D', 'M', 'E', 'S', 'U_', 'F_', 'R_', 'B_', 'L_', 'D_', 'M_', 'E_', 'S_']
-# moveset = [ 'F', 'R','M', 'E', 'S',  'F_', 'R_','M_', 'E_', 'S_']
 
 
 def rand_moves(N):

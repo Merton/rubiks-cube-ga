@@ -14,10 +14,6 @@ fit = starting_cube.fitness()
 print("Starting fitness: {}".format(fit))
 
 moves = rand_moves(num_moves)
-# print("Initial solution: {}".format(moves))
-
-# fit = starting_cube.perform_moves(moves)
-# print("Initial fitness: {}".format(fit))
 
 cube = deepcopy(starting_cube)
 fit_max = []
@@ -75,7 +71,7 @@ while t > 1:
     i += 1
 
 plt.plot(temps, fit_max, 'r-', label="SA Max")
-plt.plot(temps, fit_cur, 'b-', label="SA Current")
+# plt.plot(temps, fit_cur, 'b-', label="SA Current")
 
 plt.xlabel('Temperature')
 plt.ylabel('Fitness')

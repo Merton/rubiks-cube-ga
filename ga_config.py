@@ -6,10 +6,10 @@ max_generations = 200
 population_size = 100
 mutation_rate = 0.2
 crossover_rate = 0.8
-num_moves = 50
-demes_size = 20
-# demes_size = -1
+num_moves = 22
+demes_size = 20  # Use -1 to disable demes
 
+# Enable elitism (Preserve x percent)
 elitism = False
 top_percent_thres = 0.1  # Keep top, bring new pop in
 
@@ -20,6 +20,7 @@ starting_cube.shuffle(rigor=5)
 print("Cube:")
 print(starting_cube)
 
+# Create random array of starting moves for the population
 starting_moveset = np.array([rand_moves(num_moves) for n in range(population_size)])
 
 """

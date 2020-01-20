@@ -31,7 +31,7 @@ def mutate(genotype):
         mutation_index = randint(0, len(genotype) - 1)
         prev = ''
         if mutation_index > 0:
-            prev = genotype[mutation_index-1]
+            prev = genotype[mutation_index - 1]
         genotype[mutation_index] = rand_move(prev)
 
     return genotype
@@ -83,8 +83,8 @@ def microbial_co(pop):
     Pm = mutation_rate  # mutation_rate
 
     # Get random  genotype indexes from population, fetch population
-    g1_i,   g2_i   = random_pop_selection()
-    g1,     g2     = pop[g1_i],   pop[g2_i]
+    g1_i, g2_i = random_pop_selection()
+    g1, g2 = pop[g1_i], pop[g2_i]
     g1_fit, g2_fit = fitness(g1), fitness(g2)
 
     if g1_fit >= g2_fit:
@@ -102,7 +102,7 @@ def microbial_co(pop):
         if random() > 1 - Pm:
             prev = ''
             if i > 0:
-                prev = loser[i-1]
+                prev = loser[i - 1]
 
             loser[i] = rand_move(prev)
 
@@ -120,9 +120,9 @@ def k_crossover(pop):
     g1_fit, g2_fit = fitness(g1), fitness(g2)
     start = randint(0, k)
     if g1_fit > g2_fit:
-        for i in range(start, len(g1), k*2):
+        for i in range(start, len(g1), k * 2):
             if random() > 1 - crossover_rate:
-                g2[i:i+k] = g1[i:i+k]
+                g2[i:i + k] = g1[i:i + k]
 
         pop[g2_i] = g2
     else:
@@ -143,25 +143,20 @@ def ga(config):
     :return: The updated config for the GA
     """
     if config['has_mutation']:
-        # print("\tApplying mutation")
         config['population'] = np.apply_along_axis(mutate, 1, config['population'])
 
     if config['has_tournament']:
-        # print("\tApplying tournament selection")
         for _ in range(population_size):
             config['population'] = tournament(config['population'])
 
     if config['has_microbial_co']:
-        # print("\tApplying microbial crossover")
         for _ in range(population_size // 2):
             config['population'] = microbial_co(config['population'])
 
     if config['has_k_co']:
-        # print("\tApplying microbial crossover")
         for _ in range(population_size // 2):
             config['population'] = k_crossover(config['population'])
 
-    # print("\tCalculating fitness")
     pop_fitness = [fitness(genotype) for genotype in config['population']]
     config['fitness'] = pop_fitness
 
@@ -172,10 +167,10 @@ def ga(config):
     config['f_min'].append(f_min)
     config['f_max'].append(f_max)
     config['f_avg'].append(f_avg)
-    # print("Avg fitness: ", f_avg)
-    # print("\tIntroducing new population with best performers")
+
     if elitism:
-        best_split, new_split = int(population_size*top_percent_thres), population_size - int(population_size*(top_percent_thres))
+        best_split, new_split = int(population_size * top_percent_thres), population_size - int(
+            population_size * (top_percent_thres))
         pop_fit_arr = sorted(zip(config['population'], pop_fitness), key=lambda x: x[1], reverse=True)
 
         best_performers = [n[0] for n in pop_fit_arr][:best_split]
@@ -193,7 +188,7 @@ def run_gas():
     :param num_generations: The number of generations to run
     :return:
     """
-    runs = 20
+    runs = 1
     gen_avgs = np.zeros((runs, max_generations))
     gen_max = np.zeros((runs, max_generations))
     max_gens_reached = 0
@@ -219,22 +214,22 @@ def run_gas():
                 current_avg = np.mean(config['fitness'])
 
                 xs = [i for _ in range(population_size)]
+                # Enable to plot scatter fitness for the population (Best for low / 1 runs)
                 # plt.scatter(xs, config['fitness'])
                 gen_avgs[run, i] = current_avg
                 gen_max[run, i] = best_fitness
                 print("""Running gen {0} of {1} // Current Best: {2} // Current Avg: {3}
-    \tBest Moveset:
-    \t{4}
-    \tReverse shuffle:
-    \t{5}
-    \tOriginal Shuffle:
-    \t{6}
-    """
+\tBest Moveset:
+\t{4}
+\tReverse shuffle:
+\t{5}
+\tOriginal Shuffle:
+\t{6}
+"""
                       .format(i + 1, max_generations, best_fitness, current_avg, best_moves,
                               starting_cube.reverse_shuffle, starting_cube.initial_shuffle))
                 fit, cube_state = starting_cube.move_cache.get("".join(best_moves), (False, False))
                 print(cube_state)
-                print(fit)
 
                 if best_fitness == 48:
                     cube_solved = True
@@ -262,11 +257,11 @@ def plot_gas(i):
     can be configured in ga_config.py.
     :return:
     """
-    xs = range(i+1)
+    xs = range(i + 1)
     print_results(i)
 
     for type, values in ga_types.items():
-        plt.plot(xs, values['f_max'], values['plot_color'], label=type+" Max")
+        plt.plot(xs, values['f_max'], values['plot_color'], label=type + " Max")
 
     plt.legend()
     plt.xlabel('Generations')
